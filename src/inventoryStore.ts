@@ -1,4 +1,18 @@
+interface Category {
+  name: string,
+  displayName: string,
+  subCategories: SubCategories []
+}
+
+interface SubCategories {
+  name: string,
+  displayName: string,
+}
+
 class InventoryStore {
+  private _categories : Category[] = [];
+  private _items: InventoryItem [] = [];
+  private _isInitialized: Promise<boolean>;
   /** the inventory categories */
   get categories() {
     return this._categories;
@@ -15,10 +29,6 @@ class InventoryStore {
   }
 
   constructor() {
-    // define and initialize properties (which happen to be "private")
-    this._categories = [];
-    this._items = [];
-
     // load initial set of data
     this._isInitialized = this._load();
   }
@@ -29,7 +39,7 @@ class InventoryStore {
    * @param {string} trackingNumber the item's tracking number
    * @returns the inventory item with the given tracking number, or null
    */
-  getItem(trackingNumber) {
+  getItem(trackingNumber: string): InventoryItem {
     return this._items.find(x => x.trackingNumber === trackingNumber);
   }
 
@@ -39,7 +49,7 @@ class InventoryStore {
    * @param {InventoryItem} item the item to add to inventory
    * @returns {Promise<InventoryItem>} promise containing the updated item after it's been saved
    */
-  addItem(item) {
+  addItem(item: InventoryItem): Promise<InventoryItem> {
     const errors = this.validateItem(item);
 
     if (errors.length) {
@@ -132,7 +142,7 @@ class InventoryStore {
    * @returns {Promise<void>} a promise which resolves once the task is complete
    *
    */
-  removeItem(item) {
+  removeItem(item: InventoryItem) {
     this._items.splice(this._items.findIndex(item), 1);
     return this._save();
   }
@@ -151,7 +161,7 @@ class InventoryStore {
    *
    * @private  <-- just information, doesn't actually do anything at runtime
    */
-  _load() {
+  protected _load() {
     return Promise.all([
       getFromStorage("Categories"),
       getFromStorage("Inventory")
@@ -168,15 +178,13 @@ class InventoryStore {
    *
    * @private  <-- just information, doesn't actually do anything at runtime
    */
-  _save() {
+  protected _save() {
     return saveToStorage("Inventory", this._items);
   }
-
+  static instance = new InventoryStore();
   //#endregion
 }
 
-// Create a "static" singleton instance for the entire application to use
-InventoryStore.instance = new InventoryStore();
 
 // Expose the singleton as the default export
 export default InventoryStore.instance;
